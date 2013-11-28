@@ -69,6 +69,7 @@
                 .toArray(function (err, docs) {
                     if (err) throw err;
                     console.log('Found: ' + docs);
+                    db.close();
                     processDocs(res, err, docs);
                 });
 
@@ -91,6 +92,7 @@
                 .count(function (err, count) {
                     if (err) throw err;
                     console.log("Found: " + count);
+                    db.close();
                     deferred.resolve(parseInt(count, 10));
                 });
         });
