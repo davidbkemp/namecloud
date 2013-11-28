@@ -4,6 +4,7 @@
  */
 
 var express = require('express');
+var popularNames = require('./routes/popularNames');
 var popularNamesPerSuburb = require('./routes/popularNamesPerSuburb');
 var popularNamesPerState = require('./routes/popularNamesPerState');
 var http = require('http');
@@ -30,6 +31,7 @@ if ('development' == app.get('env')) {
 
 app.get('/popularNamesPerSuburb', popularNamesPerSuburb.list);
 app.get('/popularNamesPerState', popularNamesPerState.list);
+app.get('/popularNames', popularNames.list);
 
 
 http.createServer(app).listen(app.get('port'), function(){
