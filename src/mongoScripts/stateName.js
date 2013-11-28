@@ -60,3 +60,6 @@ db.stateNameCount.mapReduce(
             out: 'statePopularName'
         }
 );
+
+db.stateNameCount.drop();
+

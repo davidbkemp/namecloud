@@ -72,4 +72,5 @@ db.bookPopularName.find().forEach(function (bookPopularName) {
     });
 });
 
-//db.bookPopularName.ensureIndex({'value.geo': '2d'});
+db.bookNameCount.drop();
+

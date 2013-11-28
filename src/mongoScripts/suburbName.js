@@ -73,4 +73,4 @@ db.suburbPopularName.find().forEach(function (suburbPopularName) {
     });
 });
 
-//db.suburbPopularName.ensureIndex({'value.geo': '2d'});
+db.suburbNameCount.drop();
