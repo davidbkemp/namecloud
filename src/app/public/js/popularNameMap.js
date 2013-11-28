@@ -22,8 +22,9 @@ function drawPopularName(level, latLng1, latLng2, map) {
                 var marker = new MarkerWithLabel({
                     position: myLatlng,
                     map: map,
+                    icon: "/images/clear_icon.png",
                     labelContent: value["name"],
-                    labelAnchor: new google.maps.Point(22, 0),
+                    labelAnchor: new google.maps.Point(30, 10),
                     labelClass: "labels", // the CSS class for the label
                     labelStyle: {opacity: 0.75}
                 });
