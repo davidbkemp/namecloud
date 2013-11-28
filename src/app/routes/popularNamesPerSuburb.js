@@ -6,9 +6,21 @@
     var MongoClient = require('mongodb').MongoClient;
 
     var processDocs = function(res, err, docs) {
-        if (err) throw err;
+        if (err) {
+            console.log(err);
+            return;
+        }
         console.dir(docs);
-        var body = JSON.stringify(docs);
+        var transformedDocs = docs.map(function (doc) {
+            return {
+                name: doc.name,
+                geo: {
+                    lat: doc.geo[1], lon: doc.geo[0]
+                },
+                cnt: doc.cnt
+            };
+        });
+        var body = JSON.stringify(transformedDocs);
         res.setHeader('Content-Type', 'application/json');
         res.setHeader('Content-Length', body.length);
         res.end(body);
@@ -27,8 +39,10 @@
         ];
 
         MongoClient.connect('mongodb://127.0.0.1:27017/test', function(err, db) {
-            if (err) throw err;
-
+            if (err) {
+                console.log(err);
+                return;
+            }
             console.log(box);
 
             db.collection('suburbPopularName')
