@@ -19,57 +19,10 @@
             white-space: nowrap;
         }
     </style>
-    <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=INSERT_KEY_HERE&sensor=true"></script>
+    <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=INSERT_KEY_HERE&sensor=false"></script>
     <script type="text/javascript" src="/js/jquery.js"></script>
     <script type="text/javascript" src="/js/markerwithlabel.js"></script>
-    <script type="text/javascript">
-        var markersArray = [];
-
-        google.maps.Map.prototype.clearOverlays = function() {
-            for (var i = 0; i < markersArray.length; i++ ) {
-                markersArray[i].setMap(null);
-            }
-            markersArray.length = 0;
-        };
-
-        function drawPopularNamePerState(map) {
-            $.get("/popularNamesPerState", function (data) {
-                $.each(data, function (index, value) {
-                    var myLatlng = new google.maps.LatLng(value["geo"]["lat"], value["geo"]["lon"]);
-                    var marker = new MarkerWithLabel({
-                        position: myLatlng,
-                        map: map,
-                        labelContent: value["name"],
-                        labelAnchor: new google.maps.Point(22, 0),
-                        labelClass: "labels", // the CSS class for the label
-                        labelStyle: {opacity: 0.75}
-                    });
-                    markersArray.push(marker);
-                });
-            });
-        }
-        function initialize() {
-            var mapOptions = {
-                center: new google.maps.LatLng(-25.363882,131.044922),
-                zoom: 4
-            };
-            var map = new google.maps.Map(document.getElementById("map-canvas"), mapOptions);
-
-            drawPopularNamePerState(map);
-
-            google.maps.event.addListener(map, 'zoom_changed', function() {
-                console.log(map.zoom);
-                if (map.zoom >= 8)
-                {
-                    map.clearOverlays();
-                } else {
-                    drawPopularNamePerState(map);
-                }
-            });
-        }
-
-        google.maps.event.addDomListener(window, 'load', initialize);
-    </script>
+    <script type="text/javascript" src="/js/popularNameMap.js"></script>
 </head>
 <body>
 <div id="map-canvas"/>
