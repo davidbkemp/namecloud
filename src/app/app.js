@@ -4,7 +4,6 @@
  */
 
 var express = require('express');
-var routes = require('./routes');
 var popularNamesPerSuburb = require('./routes/popularNamesPerSuburb');
 var popularNamesPerState = require('./routes/popularNamesPerState');
 var http = require('http');
@@ -29,7 +28,6 @@ if ('development' == app.get('env')) {
   app.use(express.errorHandler());
 }
 
-//app.get('/', routes.index);
 app.get('/popularNamesPerSuburb', popularNamesPerSuburb.list);
 app.get('/popularNamesPerState', popularNamesPerState.list);
 

@@ -1,5 +1,7 @@
-(function () {
+/*global exports */
 
+(function () {
+    "use strict";
 
     var popularNamesPerState = function(req, res) {
         var body = JSON.stringify([
@@ -12,7 +14,7 @@
         res.setHeader('Content-Type', 'application/json');
         res.setHeader('Content-Length', body.length);
         res.end(body);
-    }
+    };
 
     exports.list = function(req, res) {
         popularNamesPerState(req, res);
