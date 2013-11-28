@@ -28,7 +28,6 @@
             {name: 'Smith', geo: {lat: -42.39, lon: 146.73}},
             {name: 'Smith', geo: {lat: -28.1, lon: 119.3}}
         ]);
-        console.log('Returning states: ' + body);
         res.setHeader('Content-Type', 'application/json');
         res.setHeader('Content-Length', body.length);
         res.end(body);
@@ -36,7 +35,10 @@
     };
 
     var processDocs = function(res, err, docs) {
-        if (err) throw err;
+        if (err) {
+            console.log(err);
+            return;
+        }
 
         console.dir(docs);
         var transformedDocs = docs.map(function (doc) {
@@ -62,13 +64,20 @@
         var box = createBoundingBox(req);
 
         MongoClient.connect('mongodb://127.0.0.1:27017/test', function(err, db) {
-            if (err) throw err;
+            if (err) {
+                console.log(err);
+                return;
+            }
+
 
             db.collection('suburbPopularName')
                 .find({geo: {'$geoWithin': {'$box': box}}})
                 .toArray(function (err, docs) {
-                    if (err) throw err;
-                    console.log('Found: ' + docs);
+                    if (err) {
+                        console.log(err);
+                        return;
+                    }
+
                     db.close();
                     processDocs(res, err, docs);
                 });
@@ -85,12 +94,20 @@
         var deferred = Q.defer();
 
         MongoClient.connect('mongodb://127.0.0.1:27017/test', function(err, db) {
-            if (err) throw err;
+            if (err) {
+                console.log(err);
+                return;
+            }
+
 
             db.collection('suburbPopularName')
                 .find({geo: {'$geoWithin': {'$box': box}}})
                 .count(function (err, count) {
-                    if (err) throw err;
+                    if (err) {
+                        console.log(err);
+                        return;
+                    }
+
                     console.log("Found: " + count);
                     db.close();
                     deferred.resolve(parseInt(count, 10));
@@ -105,7 +122,6 @@
 
         countMatchingSuburbs(req)
             .then(function handleMatchingSuburbsCount(count) {
-                console.log('Yes, really found: ' + count);
                 if (count > 100) {
                     popularNamesPerState(req, res);
                 } else {
