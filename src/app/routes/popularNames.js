@@ -15,25 +15,27 @@
             [lon1,  lat1],
             [lon2, lat2]
         ];
+
+        console.log('bounding box: ', box);
         return box;
     };
 
-    var popularNamesPerState = function(req, res) {
-        console.log('popularNamesPerState');
-        var body = JSON.stringify([
-            {name: 'Smith', geo: {lat: -36.64, lon: 144.11}},
-            {name: 'Smith', geo: {lat: -31.0, lon: 146.4}},
-            {name: 'Smith', geo: {lat: -24.9, lon: 145.0}},
-            {name: 'Smith', geo: {lat: -14.5, lon: 131.7}},
-            {name: 'Smith', geo: {lat: -27.9, lon: 134.3}},
-            {name: 'Smith', geo: {lat: -42.39, lon: 146.73}},
-            {name: 'Smith', geo: {lat: -28.1, lon: 119.3}}
-        ]);
-        res.setHeader('Content-Type', 'application/json');
-        res.setHeader('Content-Length', body.length);
-        res.end(body);
-
-    };
+//    var popularNamesPerState = function(req, res) {
+//        console.log('popularNamesPerState');
+//        var body = JSON.stringify([
+//            {name: 'Smith', geo: {lat: -36.64, lon: 144.11}},
+//            {name: 'Smith', geo: {lat: -31.0, lon: 146.4}},
+//            {name: 'Smith', geo: {lat: -24.9, lon: 145.0}},
+//            {name: 'Smith', geo: {lat: -14.5, lon: 131.7}},
+//            {name: 'Smith', geo: {lat: -27.9, lon: 134.3}},
+//            {name: 'Smith', geo: {lat: -42.39, lon: 146.73}},
+//            {name: 'Smith', geo: {lat: -28.1, lon: 119.3}}
+//        ]);
+//        res.setHeader('Content-Type', 'application/json');
+//        res.setHeader('Content-Length', body.length);
+//        res.end(body);
+//
+//    };
 
     var popularNamesPerBook = function(req, res) {
         console.log('popularNamesPerBook');
@@ -99,13 +101,7 @@
         res.end(body);
     };
 
-    var processDocs = function(res, err, docs) {
-        if (err) {
-            console.log(err);
-            return;
-        }
-
-        console.dir(docs);
+    var processDocs = function(res, docs) {
         var transformedDocs = docs.map(function (doc) {
             return {
                 name: doc.name,
@@ -129,11 +125,11 @@
         var deferred = Q.defer();
         matchingSuburbsCursor.toArray(function (err, docs) {
             if (err) {
-                console.log(err);
-                return;
+                deferred.reject(err);
+            } else {
+                processDocs(res, docs);
+                deferred.resolve();
             }
-            processDocs(res, err, docs);
-            deferred.resolve();
         });
 
         return  deferred.promise;
@@ -144,11 +140,11 @@
         var deferred = Q.defer();
         matchingSuburbsCursor.count(function (err, count) {
             if (err) {
-                console.log(err);
-                return;
+                deferred.reject(err);
+            } else {
+                console.log("Found: " + count);
+                deferred.resolve(parseInt(count, 10));
             }
-            console.log("Found: " + count);
-            deferred.resolve(parseInt(count, 10));
         });
 
         return deferred.promise;
@@ -160,7 +156,6 @@
             if (err) throw err;
             db = database;
             deferred.resolve();
-
         });
         return deferred.promise;
 
@@ -173,18 +168,18 @@
 
         countMatchingSuburbs(matchingSuburbsCursor)
             .then(function handleMatchingSuburbsCount(count) {
-                if (count > 500) {
-                    popularNamesPerState(req, res);
-                    matchingSuburbsCursor.close();
-                } else if (count > 200) {
+                if (count > 200) {
                     popularNamesPerBook(req, res);
-                    matchingSuburbsCursor.close();
                 }
                 else {
-                    popularNamesPerSuburb(req, res, matchingSuburbsCursor).then(function () {
-                        matchingSuburbsCursor.close();
-                    });
+                    return popularNamesPerSuburb(req, res, matchingSuburbsCursor);
                 }
+            }).then(function () {
+                matchingSuburbsCursor.close();
+            })
+            .fail(function (err) {
+                console.log(err);
+                res.send(500, 'Sorry, something has gone wrong!');
             });
     };
 
