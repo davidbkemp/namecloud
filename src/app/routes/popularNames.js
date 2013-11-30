@@ -6,7 +6,7 @@
 
     var Q = require('q');
     var MongoClient = require('mongodb').MongoClient;
-    var db, suburbPopularNameCollection;
+    var db;
 
     var createBoundingBox = function (req) {
         var lon1 = parseFloat(req.query.lon1, 10), lat1 = parseFloat(req.query.lat1, 10), lon2 = parseFloat(req.query.lon2, 10), lat2 = parseFloat(req.query.lat2, 10);
@@ -159,7 +159,6 @@
         MongoClient.connect('mongodb://127.0.0.1:27017/test', function(err, database) {
             if (err) throw err;
             db = database;
-            suburbPopularNameCollection = db.collection('suburbPopularName');
             deferred.resolve();
 
         });
@@ -170,7 +169,7 @@
     exports.list = function(req, res) {
         console.log(req.query);
 
-        var matchingSuburbsCursor = suburbPopularNameCollection.find({geo: {'$geoWithin': {'$box': createBoundingBox(req)}}});
+        var matchingSuburbsCursor = db.collection('suburbPopularName').find({geo: {'$geoWithin': {'$box': createBoundingBox(req)}}});
 
         countMatchingSuburbs(matchingSuburbsCursor)
             .then(function handleMatchingSuburbsCount(count) {
