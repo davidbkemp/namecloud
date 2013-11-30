@@ -6,6 +6,7 @@
 
     var Q = require('q');
     var MongoClient = require('mongodb').MongoClient;
+    var db, suburbPopularNameCollection;
 
     var createBoundingBox = function (req) {
         var lon1 = parseFloat(req.query.lon1, 10), lat1 = parseFloat(req.query.lat1, 10), lon2 = parseFloat(req.query.lon2, 10), lat2 = parseFloat(req.query.lat2, 10);
@@ -96,7 +97,7 @@
         res.setHeader('Content-Type', 'application/json');
         res.setHeader('Content-Length', body.length);
         res.end(body);
-    }
+    };
 
     var processDocs = function(res, err, docs) {
         if (err) {
@@ -121,78 +122,69 @@
     };
 
 
-    var popularNamesPerSuburb = function(req, res) {
+    var popularNamesPerSuburb = function(req, res, matchingSuburbsCursor) {
 
         console.log('popularNamesPerSuburb');
 
-        var box = createBoundingBox(req);
-
-        MongoClient.connect('mongodb://127.0.0.1:27017/test', function(err, db) {
+        var deferred = Q.defer();
+        matchingSuburbsCursor.toArray(function (err, docs) {
             if (err) {
                 console.log(err);
                 return;
             }
-
-
-            db.collection('suburbPopularName')
-                .find({geo: {'$geoWithin': {'$box': box}}})
-                .toArray(function (err, docs) {
-                    if (err) {
-                        console.log(err);
-                        return;
-                    }
-
-                    db.close();
-                    processDocs(res, err, docs);
-                });
-
-
+            processDocs(res, err, docs);
+            deferred.resolve();
         });
 
-
+        return  deferred.promise;
     };
 
-    var countMatchingSuburbs = function (req) {
-        var box = createBoundingBox(req);
+    var countMatchingSuburbs = function (matchingSuburbsCursor) {
 
         var deferred = Q.defer();
-
-        MongoClient.connect('mongodb://127.0.0.1:27017/test', function(err, db) {
+        matchingSuburbsCursor.count(function (err, count) {
             if (err) {
                 console.log(err);
                 return;
             }
-
-
-            db.collection('suburbPopularName')
-                .find({geo: {'$geoWithin': {'$box': box}}})
-                .count(function (err, count) {
-                    if (err) {
-                        console.log(err);
-                        return;
-                    }
-
-                    console.log("Found: " + count);
-                    db.close();
-                    deferred.resolve(parseInt(count, 10));
-                });
+            console.log("Found: " + count);
+            deferred.resolve(parseInt(count, 10));
         });
 
         return deferred.promise;
     };
 
+    exports.init = function () {
+        var deferred = Q.defer();
+        MongoClient.connect('mongodb://127.0.0.1:27017/test', function(err, database) {
+            if (err) throw err;
+            db = database;
+            suburbPopularNameCollection = db.collection('suburbPopularName');
+            deferred.resolve();
+
+        });
+        return deferred.promise;
+
+    };
+
     exports.list = function(req, res) {
         console.log(req.query);
 
-        countMatchingSuburbs(req)
+        var matchingSuburbsCursor = suburbPopularNameCollection.find({geo: {'$geoWithin': {'$box': createBoundingBox(req)}}});
+
+        countMatchingSuburbs(matchingSuburbsCursor)
             .then(function handleMatchingSuburbsCount(count) {
                 if (count > 500) {
                     popularNamesPerState(req, res);
+                    matchingSuburbsCursor.close();
                 } else if (count > 200) {
                     popularNamesPerBook(req, res);
+                    matchingSuburbsCursor.close();
                 }
                 else {
-                    popularNamesPerSuburb(req, res);
+                    popularNamesPerSuburb(req, res, matchingSuburbsCursor).then(function () {
+                        matchingSuburbsCursor.close();
+                    });
                 }
             });
     };
